@@ -1,0 +1,17 @@
+# render.yaml — Deploy Replify backend to Render with one click
+# Docs: https://docs.render.com/deploy-blueprints
+
+services:
+  - type: web
+    name: replify-backend
+    env: node
+    region: london
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
