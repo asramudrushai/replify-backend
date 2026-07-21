@@ -14,12 +14,12 @@ const BASE_URL = process.env.BASE_URL || 'http://localhost:' + PORT;
 app.use(cors());
 app.use(express.json());
 // Serve widget files at /widget/*
-const WIDGET_DIR = path.resolve(__dirname, '../../frontend/widget');
+const WIDGET_DIR = path.resolve(__dirname, '../frontend/widget');
 app.use('/widget', express.static(WIDGET_DIR));
 // Serve self-contained demo page (generates HTML on-the-fly with correct BASE_URL)
 let DEMO_TEMPLATE = null;
 try {
-  DEMO_TEMPLATE = fs.readFileSync(path.join(__dirname, '../../frontend/test-page.html'), 'utf8');
+  DEMO_TEMPLATE = fs.readFileSync(path.join(__dirname, '../frontend/test-page.html'), 'utf8');
 } catch (err) {
   console.warn('Demo page not found — /demo route disabled.');
 }
