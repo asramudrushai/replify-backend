@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Replify — Chat Widget Demo</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: #f0f2f5;
+            padding: 20px;
+            color: #1a1a2e;
+        }
+        .demo-page {
+            max-width: 900px;
+            margin: 40px auto;
+            background: white;
+            padding: 48px;
+            border-radius: 16px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+        }
+        .badge {
+            display: inline-block;
+            background: #eef2ff;
+            color: #4f46e5;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 4px 12px;
+            border-radius: 20px;
+            margin-bottom: 16px;
+        }
+        h1 { font-size: 28px; margin-bottom: 8px; color: #1a1a2e; }
+        .subtitle { color: #6b7280; font-size: 16px; margin-bottom: 32px; }
+        .instructions {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 12px;
+            padding: 20px 24px;
+            margin-bottom: 24px;
+        }
+        .instructions h3 { color: #166534; font-size: 14px; margin-bottom: 8px; }
+        .instructions p { color: #166534; font-size: 14px; line-height: 1.6; }
+        .instructions code {
+            background: #d1fae5;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-family: "Fira Code", monospace;
+        }
+        .features { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 24px; }
+        .feature {
+            background: #f9fafb;
+            border-radius: 10px;
+            padding: 16px;
+        }
+        .feature h4 { font-size: 14px; color: #1a1a2e; margin-bottom: 4px; }
+        .feature p { font-size: 13px; color: #6b7280; }
+        .cta {
+            margin-top: 24px;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: white;
+            padding: 16px 24px;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        .cta strong { display: block; font-size: 16px; margin-bottom: 4px; }
+
+        /* === REPLIFY WIDGET STYLES === */
+        #replify-widget-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 999999;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+        #replify-toggle {
+            width: 60px;
+            height: 60px;
+            border-radius: 30px;
+            background: #4f46e5;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s, box-shadow 0.2s;
+            border: none;
+        }
+        #replify-toggle:hover { transform: scale(1.08); box-shadow: 0 6px 20px rgba(0,0,0,0.25); }
+        #replify-toggle svg { fill: white; width: 28px; height: 28px; }
+        #replify-chat-window {
+            position: absolute;
+            bottom: 70px;
+            right: 0;
+            width: 380px;
+            height: 520px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+            font-size: 14px;
+        }
+        #replify-chat-window.open { display: flex; }
+        #replify-header {
+            background: #4f46e5;
+            color: white;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        #replify-header h3 { font-size: 15px; font-weight: 600; }
+        #replify-header span { font-size: 12px; opacity: 0.8; }
+        #replify-close {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #replify-close svg { fill: white; width: 18px; height: 18px; opacity: 0.8; }
+        #replify-close:hover { background: rgba(255,255,255,0.15); }
+        #replify-close:hover svg { opacity: 1; }
+        #replify-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            background: #f9fafb;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .replify-msg {
+            max-width: 80%;
+            padding: 10px 14px;
+            border-radius: 12px;
+            line-height: 1.5;
+            font-size: 13.5px;
+        }
+        .replify-msg.bot {
+            background: white;
+            color: #1a1a2e;
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+        }
+        .replify-msg.user {
+            background: #4f46e5;
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+        }
+        #replify-input-container {
+            padding: 12px;
+            border-top: 1px solid #f0f0f0;
+            display: flex;
+            gap: 8px;
+            background: white;
+        }
+        #replify-input {
+            flex: 1;
+            padding: 10px 14px;
+            border: 1px solid #e5e7eb;
+            border-radius: 24px;
+            font-size: 13.5px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        #replify-input:focus { border-color: #4f46e5; }
+        #replify-send {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #4f46e5;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+            flex-shrink: 0;
+        }
+        #replify-send:hover { background: #4338ca; }
+        #replify-send svg { fill: white; width: 16px; height: 16px; }
+        #replify-lead-form {
+            display: none;
+            padding: 16px;
+            background: white;
+            border-top: 1px solid #f0f0f0;
+        }
+        #replify-lead-form h4 {
+            font-size: 14px;
+            color: #1a1a2e;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+        #replify-lead-form input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 13px;
+            margin-bottom: 8px;
+            outline: none;
+        }
+        #replify-lead-form input:focus { border-color: #4f46e5; }
+        #replify-submit-lead {
+            width: 100%;
+            padding: 10px;
+            background: #4f46e5;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 13.5px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        #replify-submit-lead:hover { background: #4338ca; }
+    </style>
+</head>
+<body>
+    <div class="demo-page">
+        <span class="badge">✨ Live Demo</span>
+        <h1>Replify Chat Widget</h1>
+        <p class="subtitle">AI-powered customer service chatbot for small businesses</p>
+
+        <div class="instructions">
+            <h3>👇 Try the widget now — click the purple bubble below right</h3>
+            <p>The widget is live and connected to the backend. Try asking:</p>
+            <p><code>What are your opening hours?</code> &nbsp;or&nbsp; <code>What services do you offer?</code></p>
+            <p>Since business ID 1 has no FAQs set up yet, the bot will trigger the lead capture form — enter your details to see it in action.</p>
+        </div>
+
+        <div class="features">
+            <div class="feature">
+                <h4>💬 Instant FAQ Answers</h4>
+                <p>Matches customer questions against your custom FAQ database using AI keyword matching.</p>
+            </div>
+            <div class="feature">
+                <h4>📧 Lead Capture</h4>
+                <p>When it can't answer, it collects name + email so you can follow up manually.</p>
+            </div>
+            <div class="feature">
+                <h4>🔌 Zero Dependencies</h4>
+                <p>One script tag. Paste it on any website — no framework, no dependencies.</p>
+            </div>
+            <div class="feature">
+                <h4>📊 Dashboard</h4>
+                <p>Manage your FAQs, view leads, and track performance from one simple panel.</p>
+            </div>
+        </div>
+
+        <div class="cta">
+            <strong>Replify — £250/month for Derby small businesses</strong>
+            Includes setup, FAQ training, and ongoing support. Try it free for 30 days.
+        </div>
+    </div>
+
+    <div id="replify-widget-container">
+        <!-- Chat Bubble -->
+        <button id="replify-toggle" aria-label="Open chat">
+            <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
+        </button>
+
+        <!-- Chat Window -->
+        <div id="replify-chat-window">
+            <div id="replify-header">
+                <div>
+                    <h3>Replify Assistant</h3>
+                    <span>Typically replies instantly</span>
+                </div>
+                <button id="replify-close" aria-label="Close">
+                    <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+                </button>
+            </div>
+
+            <div id="replify-messages">
+                <div class="replify-msg bot">Hi there! 👋 Ask me anything about this business — opening hours, prices, services, and more.</div>
+            </div>
+
+            <div id="replify-input-container">
+                <input id="replify-input" type="text" placeholder="Type a message..." autocomplete="off" />
+                <button id="replify-send" aria-label="Send">
+                    <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+                </button>
+            </div>
+
+            <div id="replify-lead-form">
+                <h4>Leave your details and we'll be in touch 📩</h4>
+                <input id="replify-lead-name" type="text" placeholder="Your name (optional)" />
+                <input id="replify-lead-email" type="email" placeholder="Your email *" required />
+                <button id="replify-submit-lead">Send Details</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    (function() {
+        const businessId = 1;
+        const backendUrl = 'http://localhost:3001';
+
+        const toggle = document.getElementById('replify-toggle');
+        const chatWindow = document.getElementById('replify-chat-window');
+        const closeBtn = document.getElementById('replify-close');
+        const input = document.getElementById('replify-input');
+        const sendBtn = document.getElementById('replify-send');
+        const messages = document.getElementById('replify-messages');
+        const leadForm = document.getElementById('replify-lead-form');
+        const inputContainer = document.getElementById('replify-input-container');
+        let sessionId = null;
+
+        toggle.onclick = () => {
+            chatWindow.classList.toggle('open');
+            if (chatWindow.classList.contains('open') && !sessionId) {
+                initSession();
+            }
+        };
+        closeBtn.onclick = () => chatWindow.classList.remove('open');
+
+        async function initSession() {
+            try {
+                const resp = await fetch(backendUrl + '/api/chat/session', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ businessId })
+                });
+                const data = await resp.json();
+                sessionId = data.sessionId;
+            } catch (e) { console.error('Failed to init session', e); }
+        }
+
+        async function sendMessage() {
+            const text = input.value.trim();
+            if (!text) return;
+            addMessage(text, 'user');
+            input.value = '';
+
+            const typing = document.createElement('div');
+            typing.className = 'replify-msg bot';
+            typing.innerText = 'Thinking...';
+            messages.appendChild(typing);
+            messages.scrollTop = messages.scrollHeight;
+
+            try {
+                const resp = await fetch(backendUrl + '/api/chat/' + businessId + '/answer?question=' + encodeURIComponent(text));
+                const data = await resp.json();
+                messages.removeChild(typing);
+                addMessage(data.answer, 'bot');
+                if (data.answer.includes('leave your details')) {
+                    showLeadForm();
+                }
+            } catch (e) {
+                messages.removeChild(typing);
+                addMessage("Sorry, I'm having trouble connecting. Please try again.", 'bot');
+            }
+        }
+
+        function addMessage(text, side) {
+            const msg = document.createElement('div');
+            msg.className = 'replify-msg ' + side;
+            msg.innerText = text;
+            messages.appendChild(msg);
+            messages.scrollTop = messages.scrollHeight;
+        }
+
+        function showLeadForm() {
+            leadForm.style.display = 'block';
+            inputContainer.style.display = 'none';
+        }
+
+        sendBtn.onclick = sendMessage;
+        input.onkeypress = (e) => { if (e.key === 'Enter') sendMessage(); };
+
+        document.getElementById('replify-submit-lead').onclick = async () => {
+            const name = document.getElementById('replify-lead-name').value;
+            const email = document.getElementById('replify-lead-email').value;
+            if (!email) { alert('Email is required'); return; }
+            try {
+                await fetch(backendUrl + '/api/leads', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ businessId, name, email, sessionId })
+                });
+                leadForm.innerHTML = '<p style="text-align:center;color:#10b981;font-size:14px;padding:16px 0;">✅ Thank you! We\'ll be in touch soon.</p>';
+                setTimeout(() => {
+                    leadForm.style.display = 'none';
+                    inputContainer.style.display = 'flex';
+                }, 3000);
+            } catch (e) {
+                alert('Failed to save. Please try again.');
+            }
+        };
+    })();
+    </script>
+</body>
+</html>
