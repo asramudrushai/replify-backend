@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const path = require('path');
 const cors = require('cors');
+const fs = require('fs');
 const authRoutes = require('./routes/auth');
 const faqRoutes = require('./routes/faqs');
 const chatRoutes = require('./routes/chat');
@@ -16,7 +17,6 @@ app.use(express.json());
 const WIDGET_DIR = path.resolve(__dirname, '../../frontend/widget');
 app.use('/widget', express.static(WIDGET_DIR));
 // Serve self-contained demo page (generates HTML on-the-fly with correct BASE_URL)
-const fs = require('fs');
 let DEMO_TEMPLATE = null;
 try {
   DEMO_TEMPLATE = fs.readFileSync(path.join(__dirname, '../../frontend/test-page.html'), 'utf8');
@@ -32,7 +32,11 @@ app.get('/demo', (req, res) => {
 });
 // Serve widget test page at root /
 app.get('/', (req, res) => {
-  res.sendFile(path.join(WIDGET_DIR, 'index.html'));
+  const widgetIndex = path.join(WIDGET_DIR, 'index.html');
+  if (!fs.existsSync(widgetIndex)) {
+    return res.status(200).send('<h1>Replify</h1><p>AI chatbots for local businesses. Widget coming soon — API is running fine. Try <a href="/health">/health</a>.</p>');
+  }
+  res.sendFile(widgetIndex);
 });
 // Routes
 app.use('/api/auth', authRoutes);
