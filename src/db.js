@@ -62,7 +62,7 @@ if (svFaqCount === 0) {
   const insertSv = db.prepare('INSERT INTO faqs (business_id, question, answer) VALUES (2, ?, ?)');
   insertSv.run('What are your opening hours? When are you open?', 'We are open Monday to Friday 9.30am to 4pm, and weekends 10am to 3pm.');
   insertSv.run('Are you dog friendly? Can I bring my dog?', 'Dogs are very welcome in our outdoor seating areas - the wooden pagoda or the picnic benches by the stables - and we even have a doggy menu! Unfortunately dogs are not allowed inside the cafe itself.');
-  insertSv.run('Do I need to book a table? Can I make a reservation or booking?', 'We operate on a first come first served basis. Bookings are only needed for special occasions, groups of more than 4 people, or afternoon tea - just get in touch to arrange.');
+insertSv.run('Do I need to book a table? Can I make a reservation or booking?', 'We operate on a first come first served basis. Bookings are only needed for special occasions, groups of more than 4 people, or afternoon tea - pop your name and email below and leave your details, and the team will get straight back to you to arrange it.');
   insertSv.run('Where are you located? What is your address? Do you have parking?', 'You will find us at Spondon Road, Ilkeston DE7 4PQ - a lovely spot by the stables, surrounded by great local walks.');
   insertSv.run('What food do you serve? Do you do breakfast, lunch or vegetarian options?', 'We serve coffee, cake, breakfast, brunch and lunch, including our famous Stable Breakfast. Our seasonal menu uses the freshest ingredients and includes vegetarian options.');
   insertSv.run('How do I contact you? What is your phone number or email?', 'You can call us on 01332 677373 or email stableviewinfo@gmail.com on weekdays.');
