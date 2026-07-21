@@ -1,16 +1,68 @@
-const { execSync } = require('child_process');
+const path = require('path');
+const Database = require('better-sqlite3');
+
+// Real SQLite database file (replaces the team-db CLI from cto.new)
+const dbPath = process.env.DB_PATH || path.join(__dirname, '..', 'replify.db');
+const db = new Database(dbPath);
+
+// Create tables on startup if they don't exist
+db.exec(`
+CREATE TABLE IF NOT EXISTS businesses (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT,
+  email TEXT UNIQUE,
+  password_hash TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+CREATE TABLE IF NOT EXISTS faqs (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  business_id INTEGER,
+  question TEXT,
+  answer TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+CREATE TABLE IF NOT EXISTS chat_sessions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  business_id INTEGER,
+  widget_id TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+CREATE TABLE IF NOT EXISTS leads (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  business_id INTEGER,
+  name TEXT,
+  email TEXT,
+  chat_session_id INTEGER,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+`);
+
+// Seed demo business (ID 1) with sample FAQs so the demo always works
+const businessCount = db.prepare('SELECT COUNT(*) AS c FROM businesses').get().c;
+if (businessCount === 0) {
+  db.prepare("INSERT INTO businesses (id, name, email, password_hash) VALUES (1, 'Replify Demo Business', 'demo@replify.uk', '')").run();
+}
+const faqCount = db.prepare('SELECT COUNT(*) AS c FROM faqs WHERE business_id = 1').get().c;
+if (faqCount === 0) {
+  const insertFaq = db.prepare('INSERT INTO faqs (business_id, question, answer) VALUES (1, ?, ?)');
+  insertFaq.run('What are your opening hours?', 'We are open Monday to Friday 9am to 5pm, and Saturday 10am to 2pm. Closed Sundays.');
+  insertFaq.run('What services do you offer?', 'We offer AI-powered customer service chatbots for small businesses, including setup, FAQ training, and ongoing support.');
+  insertFaq.run('How much does it cost? What are your prices?', 'Replify costs 200 pounds per month plus a 495 pound one-off setup fee, with a free 30-day trial. Half-price setup for our first 3 founding clients!');
+  insertFaq.run('Where are you located? What is your address?', 'We are based in Derby, UK, and work with local small businesses across the area.');
+  insertFaq.run('How do I contact you? What is your phone number or email?', 'You can reach us at hello.replify.uk@gmail.com and we will get back to you within one working day.');
+}
 
 /**
- * Executes a SQL statement using the team-db CLI.
- * @param {string} sql - The SQL statement to execute.
- * @returns {Array|Object} - The parsed JSON output from team-db.
+ * Executes a SQL statement against the local SQLite database.
+ * SELECT statements return an array of rows; other statements return an empty array.
  */
 function query(sql) {
   try {
-    // Escape single quotes in the SQL for the shell command
-    const escapedSql = sql.replace(/'/g, "'\\''");
-    const result = execSync(`team-db '${escapedSql}'`, { encoding: 'utf8' });
-    return JSON.parse(result);
+    if (sql.trim().toUpperCase().startsWith('SELECT')) {
+      return db.prepare(sql).all();
+    }
+    db.prepare(sql).run();
+    return [];
   } catch (error) {
     console.error('Database query error:', error.message);
     console.error('SQL:', sql);
