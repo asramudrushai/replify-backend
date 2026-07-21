@@ -27,7 +27,9 @@ app.get('/demo', (req, res) => {
   if (!DEMO_TEMPLATE) {
     return res.status(200).send('<h1>Replify</h1><p>Demo page coming soon. API is running fine — try <a href="/health">/health</a>.</p>');
   }
-  const html = DEMO_TEMPLATE.replace(/const backendUrl = 'http:\/\/localhost:3001';/g, "const backendUrl = '" + BASE_URL + "';");
+  const businessId = parseInt(req.query.business, 10) || 1;
+  let html = DEMO_TEMPLATE.replace(/const backendUrl = 'http:\/\/localhost:3001';/g, "const backendUrl = '" + BASE_URL + "';");
+  html = html.replace(/const businessId = 1;/g, 'const businessId = ' + businessId + ';');
   res.type('html').send(html);
 });
 // Serve widget test page at root /
