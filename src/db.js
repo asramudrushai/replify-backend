@@ -66,7 +66,7 @@ if (svFaqCount === 0) {
   insertSv.run('Where are you located? What is your address? Do you have parking?', 'You will find us at Spondon Road, Ilkeston DE7 4PQ - a lovely spot by the stables, surrounded by great local walks.');
   insertSv.run('What food do you serve? Do you do breakfast, lunch or vegetarian options?', 'We serve coffee, cake, breakfast, brunch and lunch, including our famous Stable Breakfast. Our seasonal menu uses the freshest ingredients and includes vegetarian options.');
   insertSv.run('How do I contact you? What is your phone number or email?', 'You can call us on 01332 677373 or email stableviewinfo@gmail.com on weekdays.');
-  insertSv.run('Do you do events, parties or afternoon tea?', 'Yes! Our afternoon tea is 23.95 pounds per person, and we host events too - contact us on 01332 677373 or stableviewinfo@gmail.com to book your special occasion.');
+ insertSv.run('Do you do events, parties or afternoon tea?', 'Yes! Our afternoon tea is 23.95 pounds per person and we host events too. Pop your name and email below and leave your details - the team will get straight back to you to arrange it.');
   insertSv.run('Do you serve drinks, ice cream or hot chocolate?', 'Yes - alongside great coffee we do Baileys hot chocolate, and in summer our Horse Box bar serves hot and cold drinks including local Bluebells ice cream.');
 }
 
