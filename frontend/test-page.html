@@ -69,7 +69,6 @@
         }
         .cta strong { display: block; font-size: 16px; margin-bottom: 4px; }
 
-        /* === REPLIFY WIDGET STYLES === */
         #replify-widget-container {
             position: fixed;
             bottom: 20px;
@@ -226,6 +225,16 @@
             transition: background 0.2s;
         }
         #replify-submit-lead:hover { background: #4338ca; }
+        #replify-skip-lead {
+            width: 100%;
+            margin-top: 8px;
+            background: none;
+            border: none;
+            color: #6b7280;
+            font-size: 12px;
+            cursor: pointer;
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
@@ -237,7 +246,7 @@
 
         <div class="instructions">
             <h3>👇 Try the widget now — click the purple bubble below right</h3>
-            <p>The widget is live and connected to the backend. Try asking:</p>
+            <p>Ask it anything — it answers instantly, 24/7. Try asking:</p>
             <p><code>What are your opening hours?</code> &nbsp;or&nbsp; <code>What services do you offer?</code></p>
             <p>If the bot doesn't have an answer, it will ask for your name and email so the business can follow up.</p>
         </div>
@@ -268,12 +277,10 @@
     </div>
 
     <div id="replify-widget-container">
-        <!-- Chat Bubble -->
         <button id="replify-toggle" aria-label="Open chat">
             <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
         </button>
 
-        <!-- Chat Window -->
         <div id="replify-chat-window">
             <div id="replify-header">
                 <div>
@@ -301,6 +308,7 @@
                 <input id="replify-lead-name" type="text" placeholder="Your name (optional)" />
                 <input id="replify-lead-email" type="email" placeholder="Your email *" required />
                 <button id="replify-submit-lead">Send Details</button>
+                <button id="replify-skip-lead">Maybe later — keep chatting</button>
             </div>
         </div>
     </div>
@@ -378,6 +386,11 @@
             leadForm.style.display = 'block';
             inputContainer.style.display = 'none';
         }
+
+        document.getElementById('replify-skip-lead').onclick = () => {
+            leadForm.style.display = 'none';
+            inputContainer.style.display = 'flex';
+        };
 
         sendBtn.onclick = sendMessage;
         input.onkeypress = (e) => { if (e.key === 'Enter') sendMessage(); };
