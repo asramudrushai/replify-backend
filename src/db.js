@@ -35,6 +35,7 @@ CREATE TABLE IF NOT EXISTS leads (
 );
 `);
 
+// Seed demo business (ID 1)
 const businessCount = db.prepare('SELECT COUNT(*) AS c FROM businesses').get().c;
 if (businessCount === 0) {
   db.prepare("INSERT INTO businesses (id, name, email, password_hash) VALUES (1, 'Replify Demo Business', 'demo@replify.uk', '')").run();
@@ -49,6 +50,7 @@ if (faqCount === 0) {
   insertFaq.run('How do I contact you? What is your phone number or email?', 'You can reach us at hello.replify.uk@gmail.com and we will get back to you within one working day.');
 }
 
+// Seed Stable View cafe (ID 2)
 const svCount = db.prepare('SELECT COUNT(*) AS c FROM businesses WHERE id = 2').get().c;
 if (svCount === 0) {
   db.prepare("INSERT INTO businesses (id, name, email, password_hash) VALUES (2, 'Stable View', 'stableviewinfo@gmail.com', '')").run();
@@ -68,6 +70,30 @@ if (svFaqCount === 0) {
   insertSv.run('How do I contact you? What is your phone number or email?', 'You can call us on 01332 677373 or email stableviewinfo@gmail.com. If you leave your name and email here, the team will get back to you as soon as there is a quiet moment.');
 }
 
+// Seed Ashbourne Road Dental (ID 3)
+const drCount = db.prepare('SELECT COUNT(*) AS c FROM businesses WHERE id = 3').get().c;
+if (drCount === 0) {
+  db.prepare("INSERT INTO businesses (id, name, email, password_hash) VALUES (3, 'Ashbourne Road Dental', 'info@ashbourneroaddental.co.uk', '')").run();
+}
+const drFaqCount = db.prepare('SELECT COUNT(*) AS c FROM faqs WHERE business_id = 3').get().c;
+if (drFaqCount === 0) {
+  const insertDr = db.prepare('INSERT INTO faqs (business_id, question, answer) VALUES (3, ?, ?)');
+  insertDr.run('What are your opening hours? When are you open?', 'We are open Monday to Thursday 8am to 5pm, Friday 8.30am to 5.30pm, and Saturday by appointment only. Closed Sundays.');
+  insertDr.run('Are you taking on new patients? Can I register? Do you take NHS or private?', 'We are currently accepting new NHS patients for children, and we welcome new private patients of all ages. Pop your name and email below and leave your details, and our team will get straight back to you to talk through your options and get you registered.');
+  insertDr.run('Do you do emergency appointments? I have toothache or a dental emergency', 'Yes, we offer emergency dental care. If it is urgent, please call us on 01332 362 211 so we can help you as quickly as possible. You can also leave your name and email below and the team will get straight back to you.');
+  insertDr.run('Do you do teeth straightening, Invisalign or braces?', 'Yes, we offer teeth straightening including clear aligner options to give you a straighter smile. Leave your name and email below and our team will get back to you to arrange a consultation.');
+  insertDr.run('Do you do dental implants or replace missing teeth?', 'Yes, we provide dental implants to replace missing teeth and restore your smile. Pop your name and email below and leave your details, and the team will get straight back to you to arrange a consultation.');
+  insertDr.run('Do you do cosmetic dentistry, teeth whitening or veneers?', 'Yes, we offer a range of cosmetic dentistry including teeth whitening, veneers and smile makeovers. Leave your name and email below and our team will get back to you to talk through your options.');
+  insertDr.run('Do you do facial aesthetics?', 'Yes, we offer facial aesthetics treatments. Pop your name and email below and leave your details, and our team will get straight back to you with more information.');
+  insertDr.run('How do I book an appointment?', 'You can book online through our website, call us on 01332 362 211, or leave your name and email below and our team will get straight back to you to arrange a time that suits.');
+  insertDr.run('Where are you located? What is your address? Do you have parking?', 'We are an independent dental clinic based on Ashbourne Road, serving patients across Derby and Derbyshire. Please call us on 01332 362 211 if you need directions.');
+  insertDr.run('How do I contact you? What is your phone number or email?', 'You can call us on 01332 362 211 or email info@ashbourneroaddental.co.uk. You can also leave your name and email here and our team will get back to you.');
+}
+
+/**
+ * Executes a SQL statement against the local SQLite database.
+ * SELECT statements return an array of rows; other statements return an empty array.
+ */
 function query(sql) {
   try {
     if (sql.trim().toUpperCase().startsWith('SELECT')) {
