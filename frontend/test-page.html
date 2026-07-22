@@ -365,7 +365,8 @@
                 const data = await resp.json();
                 messages.removeChild(typing);
                 addMessage(data.answer, 'bot');
-                if (data.answer.includes('leave your details') || data.answer.includes('leave your name and email')) {
+                const lower = data.answer.toLowerCase();
+                if (lower.includes('leave your details') || lower.includes('leave your name and email')) {
                     showLeadForm();
                 }
             } catch (e) {
