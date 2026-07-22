@@ -1,91 +1,423 @@
-const path = require('path');
-const Database = require('better-sqlite3');
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Replify — Chat Widget Demo</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: #f0f2f5;
+            padding: 20px;
+            color: #1a1a2e;
+        }
+        .demo-page {
+            max-width: 900px;
+            margin: 40px auto;
+            background: white;
+            padding: 48px;
+            border-radius: 16px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+        }
+        .logo { display: block; max-width: 260px; margin: 0 auto 24px; }
+        .badge {
+            display: inline-block;
+            background: #eef2ff;
+            color: #4f46e5;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 4px 12px;
+            border-radius: 20px;
+            margin-bottom: 16px;
+        }
+        h1 { font-size: 28px; margin-bottom: 8px; color: #1a1a2e; }
+        .subtitle { color: #6b7280; font-size: 16px; margin-bottom: 32px; }
+        .instructions {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 12px;
+            padding: 20px 24px;
+            margin-bottom: 24px;
+        }
+        .instructions h3 { color: #166534; font-size: 14px; margin-bottom: 8px; }
+        .instructions p { color: #166534; font-size: 14px; line-height: 1.6; }
+        .instructions code {
+            background: #d1fae5;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-family: "Fira Code", monospace;
+        }
+        .features { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 24px; }
+        .feature {
+            background: #f9fafb;
+            border-radius: 10px;
+            padding: 16px;
+        }
+        .feature h4 { font-size: 14px; color: #1a1a2e; margin-bottom: 4px; }
+        .feature p { font-size: 13px; color: #6b7280; }
+        .cta {
+            margin-top: 24px;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: white;
+            padding: 16px 24px;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        .cta strong { display: block; font-size: 16px; margin-bottom: 4px; }
 
-const dbPath = process.env.DB_PATH || path.join(__dirname, '..', 'replify.db');
-const db = new Database(dbPath);
+        /* === REPLIFY WIDGET STYLES === */
+        #replify-widget-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 999999;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+        #replify-toggle {
+            width: 60px;
+            height: 60px;
+            border-radius: 30px;
+            background: #4f46e5;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s, box-shadow 0.2s;
+            border: none;
+        }
+        #replify-toggle:hover { transform: scale(1.08); box-shadow: 0 6px 20px rgba(0,0,0,0.25); }
+        #replify-toggle svg { fill: white; width: 28px; height: 28px; }
+        #replify-chat-window {
+            position: absolute;
+            bottom: 70px;
+            right: 0;
+            width: 380px;
+            height: 520px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+            font-size: 14px;
+        }
+        #replify-chat-window.open { display: flex; }
+        #replify-header {
+            background: #4f46e5;
+            color: white;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        #replify-header h3 { font-size: 15px; font-weight: 600; }
+        #replify-header span { font-size: 12px; opacity: 0.8; }
+        #replify-close {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #replify-close svg { fill: white; width: 18px; height: 18px; opacity: 0.8; }
+        #replify-close:hover { background: rgba(255,255,255,0.15); }
+        #replify-close:hover svg { opacity: 1; }
+        #replify-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            background: #f9fafb;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .replify-msg {
+            max-width: 80%;
+            padding: 10px 14px;
+            border-radius: 12px;
+            line-height: 1.5;
+            font-size: 13.5px;
+        }
+        .replify-msg.bot {
+            background: white;
+            color: #1a1a2e;
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+        }
+        .replify-msg.user {
+            background: #4f46e5;
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+        }
+        #replify-input-container {
+            padding: 12px;
+            border-top: 1px solid #f0f0f0;
+            display: flex;
+            gap: 8px;
+            background: white;
+        }
+        #replify-input {
+            flex: 1;
+            padding: 10px 14px;
+            border: 1px solid #e5e7eb;
+            border-radius: 24px;
+            font-size: 13.5px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        #replify-input:focus { border-color: #4f46e5; }
+        #replify-send {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #4f46e5;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+            flex-shrink: 0;
+        }
+        #replify-send:hover { background: #4338ca; }
+        #replify-send svg { fill: white; width: 16px; height: 16px; }
+        #replify-lead-form {
+            display: none;
+            padding: 16px;
+            background: white;
+            border-top: 1px solid #f0f0f0;
+        }
+        #replify-lead-form h4 {
+            font-size: 14px;
+            color: #1a1a2e;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+        #replify-lead-form input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 13px;
+            margin-bottom: 8px;
+            outline: none;
+        }
+        #replify-lead-form input:focus { border-color: #4f46e5; }
+        #replify-submit-lead {
+            width: 100%;
+            padding: 10px;
+            background: #4f46e5;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 13.5px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        #replify-submit-lead:hover { background: #4338ca; }
+        #replify-skip-lead {
+            width: 100%;
+            margin-top: 8px;
+            background: none;
+            border: none;
+            color: #6b7280;
+            font-size: 12px;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-page">
+        <img class="logo" src="https://raw.githubusercontent.com/asramudrushai/replify-backend/main/logo.png" alt="Replify.uk — bots that reply, business that grows" />
+        <span class="badge">✨ Live Demo</span>
+        <h1>Replify Chat Widget</h1>
+        <p class="subtitle">AI-powered customer service chatbot for small businesses</p>
 
-db.exec(`
-CREATE TABLE IF NOT EXISTS businesses (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  name TEXT,
-  email TEXT UNIQUE,
-  password_hash TEXT,
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-);
-CREATE TABLE IF NOT EXISTS faqs (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  business_id INTEGER,
-  question TEXT,
-  answer TEXT,
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-);
-CREATE TABLE IF NOT EXISTS chat_sessions (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  business_id INTEGER,
-  widget_id TEXT,
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-);
-CREATE TABLE IF NOT EXISTS leads (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  business_id INTEGER,
-  name TEXT,
-  email TEXT,
-  chat_session_id INTEGER,
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-);
-`);
+        <div class="instructions">
+            <h3>👇 Try the widget now — click the purple bubble below right</h3>
+            <p>Ask it anything — it answers instantly, 24/7. Try asking:</p>
+            <p><code>What are your opening hours?</code> &nbsp;or&nbsp; <code>What services do you offer?</code></p>
+            <p>If the bot doesn't have an answer, it will ask for your name and email so the business can follow up.</p>
+        </div>
 
-// Seed demo business (ID 1)
-const businessCount = db.prepare('SELECT COUNT(*) AS c FROM businesses').get().c;
-if (businessCount === 0) {
-  db.prepare("INSERT INTO businesses (id, name, email, password_hash) VALUES (1, 'Replify Demo Business', 'demo@replify.uk', '')").run();
-}
-const faqCount = db.prepare('SELECT COUNT(*) AS c FROM faqs WHERE business_id = 1').get().c;
-if (faqCount === 0) {
-  const insertFaq = db.prepare('INSERT INTO faqs (business_id, question, answer) VALUES (1, ?, ?)');
-  insertFaq.run('What are your opening hours?', 'We are open Monday to Friday 9am to 5pm, and Saturday 10am to 2pm. Closed Sundays.');
-  insertFaq.run('What services do you offer?', 'We offer AI-powered customer service chatbots for small businesses, including setup, FAQ training, and ongoing support.');
-  insertFaq.run('How much does it cost? What are your prices?', 'Replify costs 200 pounds per month plus a 495 pound one-off setup fee, with a free 30-day trial. Half-price setup for our first 3 founding clients!');
-  insertFaq.run('Where are you located? What is your address?', 'We are based in Derby, UK, and work with local small businesses across the area.');
-  insertFaq.run('How do I contact you? What is your phone number or email?', 'You can reach us at hello.replify.uk@gmail.com and we will get back to you within one working day.');
-}
+        <div class="features">
+            <div class="feature">
+                <h4>💬 Instant FAQ Answers</h4>
+                <p>Matches customer questions against your custom FAQ database using AI keyword matching.</p>
+            </div>
+            <div class="feature">
+                <h4>📧 Lead Capture</h4>
+                <p>When it can't answer, it collects name + email so you can follow up manually.</p>
+            </div>
+            <div class="feature">
+                <h4>🔌 Zero Dependencies</h4>
+                <p>One script tag. Paste it on any website — no framework, no dependencies.</p>
+            </div>
+            <div class="feature">
+                <h4>📊 Dashboard</h4>
+                <p>Manage your FAQs, view leads, and track performance from one simple panel.</p>
+            </div>
+        </div>
 
-// Seed Stable View cafe (ID 2)
-const svCount = db.prepare('SELECT COUNT(*) AS c FROM businesses WHERE id = 2').get().c;
-if (svCount === 0) {
-  db.prepare("INSERT INTO businesses (id, name, email, password_hash) VALUES (2, 'Stable View', 'stableviewinfo@gmail.com', '')").run();
-}
-const svFaqCount = db.prepare('SELECT COUNT(*) AS c FROM faqs WHERE business_id = 2').get().c;
-if (svFaqCount === 0) {
-  const insertSv = db.prepare('INSERT INTO faqs (business_id, question, answer) VALUES (2, ?, ?)');
-  insertSv.run('What are your opening hours? When are you open?', 'We are open Monday to Friday 9.30am to 4pm, and weekends 10am to 3pm.');
-  insertSv.run('Are you dog friendly? Can I bring my dog?', 'Dogs are very welcome in our outdoor seating areas - the wooden pagoda or the picnic benches by the stables - and we even have a doggy menu! Unfortunately dogs are not allowed inside the cafe itself. In summer our Horse Box bar serves drinks outside too.');
-  insertSv.run('Do I need to book a table? Can I make a reservation or booking?', 'For tables of 4 or less we run on a first come first served basis, so just pop in. For anything more than that, we recommend booking to avoid disappointment - pop your name and email below and leave your details and the team will get straight back to you to arrange it.');
-  insertSv.run('Do you do afternoon tea? How much is it and can I get it to take away?', 'Yes! Our afternoon tea is 23.95 pounds per person, served beautifully in gorgeous china. We can also make up afternoon tea boxes to take away. It is very popular for celebrations, so please leave your name and email below and the team will get back to you to book it in.');
-  insertSv.run('Do you host events, parties, baby showers, birthdays or weddings?', 'Yes! We love hosting celebrations - baby showers, birthdays, bridal afternoon teas and more, with a lovely upstairs space for private groups. Pop your name and email below and leave your details, and the team will get straight back to you to plan your event.');
-  insertSv.run('Do you cater for dietary requirements? Vegetarian, vegan, gluten free or allergies?', 'Absolutely - we regularly cater for vegetarian, gluten free and various allergies, and always do our best to accommodate dietary needs. Just let us know when you visit or when booking.');
-  insertSv.run('Where are you located? What is your address? Do you have parking?', 'You will find us at Spondon Road, Ilkeston DE7 4PQ - a lovely spot in the Derbyshire countryside with plenty of parking and beautiful views across the fields.');
-  insertSv.run('What food do you serve? Do you do breakfast, lunch or brunch?', 'We serve award-winning coffee, freshly baked cakes, breakfast, brunch and lunch - including our famous Stable Breakfast and burgers on pretzel buns. Our seasonal menu uses fresh, locally sourced ingredients.');
-  insertSv.run('Do you have local walks nearby?', 'Yes - we are surrounded by beautiful Derbyshire countryside and have walking maps available. A Baileys hot chocolate after a long walk is a favourite!');
-  insertSv.run('How do I contact you? What is your phone number or email?', 'You can call us on 01332 677373 or email stableviewinfo@gmail.com. If you leave your name and email here, the team will get back to you as soon as there is a quiet moment.');
-}
+        <div class="cta">
+            <strong>Replify — £200/month for Derby small businesses</strong>
+            £495 setup — half price for our first 3 founding clients. Includes FAQ training and ongoing support. Try it free for 30 days.
+        </div>
+    </div>
 
-/**
- * Executes a SQL statement against the local SQLite database.
- * SELECT statements return an array of rows; other statements return an empty array.
- */
-function query(sql) {
-  try {
-    if (sql.trim().toUpperCase().startsWith('SELECT')) {
-      return db.prepare(sql).all();
-    }
-    db.prepare(sql).run();
-    return [];
-  } catch (error) {
-    console.error('Database query error:', error.message);
-    console.error('SQL:', sql);
-    throw error;
-  }
-}
+    <div id="replify-widget-container">
+        <!-- Chat Bubble -->
+        <button id="replify-toggle" aria-label="Open chat">
+            <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
+        </button>
 
-module.exports = { query };
+        <!-- Chat Window -->
+        <div id="replify-chat-window">
+            <div id="replify-header">
+                <div>
+                    <h3>Replify Assistant</h3>
+                    <span>Typically replies instantly</span>
+                </div>
+                <button id="replify-close" aria-label="Close">
+                    <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+                </button>
+            </div>
+
+            <div id="replify-messages">
+                <div class="replify-msg bot">Hi there! 👋 Ask me anything about this business — opening hours, prices, services, and more.</div>
+            </div>
+
+            <div id="replify-input-container">
+                <input id="replify-input" type="text" placeholder="Type a message..." autocomplete="off" />
+                <button id="replify-send" aria-label="Send">
+                    <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+                </button>
+            </div>
+
+            <div id="replify-lead-form">
+                <h4>Leave your details and we'll be in touch 📩</h4>
+                <input id="replify-lead-name" type="text" placeholder="Your name (optional)" />
+                <input id="replify-lead-email" type="email" placeholder="Your email *" required />
+                <button id="replify-submit-lead">Send Details</button>
+                <button id="replify-skip-lead">Maybe later — keep chatting</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    (function() {
+        const businessId = 1;
+        const backendUrl = 'http://localhost:3001';
+
+        const toggle = document.getElementById('replify-toggle');
+        const chatWindow = document.getElementById('replify-chat-window');
+        const closeBtn = document.getElementById('replify-close');
+        const input = document.getElementById('replify-input');
+        const sendBtn = document.getElementById('replify-send');
+        const messages = document.getElementById('replify-messages');
+        const leadForm = document.getElementById('replify-lead-form');
+        const inputContainer = document.getElementById('replify-input-container');
+        let sessionId = null;
+
+        toggle.onclick = () => {
+            chatWindow.classList.toggle('open');
+            if (chatWindow.classList.contains('open') && !sessionId) {
+                initSession();
+            }
+        };
+        closeBtn.onclick = () => chatWindow.classList.remove('open');
+
+        async function initSession() {
+            try {
+                const resp = await fetch(backendUrl + '/api/chat/session', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ businessId })
+                });
+                const data = await resp.json();
+                sessionId = data.sessionId;
+            } catch (e) { console.error('Failed to init session', e); }
+        }
+
+        async function sendMessage() {
+            const text = input.value.trim();
+            if (!text) return;
+            addMessage(text, 'user');
+            input.value = '';
+
+            const typing = document.createElement('div');
+            typing.className = 'replify-msg bot';
+            typing.innerText = 'Thinking...';
+            messages.appendChild(typing);
+            messages.scrollTop = messages.scrollHeight;
+
+            try {
+                const resp = await fetch(backendUrl + '/api/chat/' + businessId + '/answer?question=' + encodeURIComponent(text));
+                const data = await resp.json();
+                messages.removeChild(typing);
+                addMessage(data.answer, 'bot');
+                if (data.answer.includes('leave your details')) {
+                    showLeadForm();
+                }
+            } catch (e) {
+                messages.removeChild(typing);
+                addMessage("Sorry, I'm having trouble connecting. Please try again.", 'bot');
+            }
+        }
+
+        function addMessage(text, side) {
+            const msg = document.createElement('div');
+            msg.className = 'replify-msg ' + side;
+            msg.innerText = text;
+            messages.appendChild(msg);
+            messages.scrollTop = messages.scrollHeight;
+        }
+
+        function showLeadForm() {
+            leadForm.style.display = 'block';
+            inputContainer.style.display = 'none';
+        }
+
+        document.getElementById('replify-skip-lead').onclick = () => {
+            leadForm.style.display = 'none';
+            inputContainer.style.display = 'flex';
+        };
+
+        sendBtn.onclick = sendMessage;
+        input.onkeypress = (e) => { if (e.key === 'Enter') sendMessage(); };
+
+        document.getElementById('replify-submit-lead').onclick = async () => {
+            const name = document.getElementById('replify-lead-name').value;
+            const email = document.getElementById('replify-lead-email').value;
+            if (!email) { alert('Email is required'); return; }
+            try {
+                await fetch(backendUrl + '/api/leads', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ businessId, name, email, sessionId })
+                });
+                leadForm.innerHTML = '<p style="text-align:center;color:#10b981;font-size:14px;padding:16px 0;">✅ Thank you! We\'ll be in touch soon.</p>';
+                setTimeout(() => {
+                    leadForm.style.display = 'none';
+                    inputContainer.style.display = 'flex';
+                }, 3000);
+            } catch (e) {
+                alert('Failed to save. Please try again.');
+            }
+        };
+    })();
+    </script>
+</body>
+</html>
