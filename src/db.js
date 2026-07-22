@@ -1,11 +1,9 @@
 const path = require('path');
 const Database = require('better-sqlite3');
 
-// Real SQLite database file (replaces the team-db CLI from cto.new)
 const dbPath = process.env.DB_PATH || path.join(__dirname, '..', 'replify.db');
 const db = new Database(dbPath);
 
-// Create tables on startup if they don't exist
 db.exec(`
 CREATE TABLE IF NOT EXISTS businesses (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -37,7 +35,7 @@ CREATE TABLE IF NOT EXISTS leads (
 );
 `);
 
-// Seed demo business (ID 1) with sample FAQs so the demo always works
+// Seed demo business (ID 1)
 const businessCount = db.prepare('SELECT COUNT(*) AS c FROM businesses').get().c;
 if (businessCount === 0) {
   db.prepare("INSERT INTO businesses (id, name, email, password_hash) VALUES (1, 'Replify Demo Business', 'demo@replify.uk', '')").run();
@@ -52,7 +50,7 @@ if (faqCount === 0) {
   insertFaq.run('How do I contact you? What is your phone number or email?', 'You can reach us at hello.replify.uk@gmail.com and we will get back to you within one working day.');
 }
 
-// Seed Stable View cafe (ID 2) with FAQs from their public info — pre-built sales demo
+// Seed Stable View cafe (ID 2)
 const svCount = db.prepare('SELECT COUNT(*) AS c FROM businesses WHERE id = 2').get().c;
 if (svCount === 0) {
   db.prepare("INSERT INTO businesses (id, name, email, password_hash) VALUES (2, 'Stable View', 'stableviewinfo@gmail.com', '')").run();
@@ -62,7 +60,7 @@ if (svFaqCount === 0) {
   const insertSv = db.prepare('INSERT INTO faqs (business_id, question, answer) VALUES (2, ?, ?)');
   insertSv.run('What are your opening hours? When are you open?', 'We are open Monday to Friday 9.30am to 4pm, and weekends 10am to 3pm.');
   insertSv.run('Are you dog friendly? Can I bring my dog?', 'Dogs are very welcome in our outdoor seating areas - the wooden pagoda or the picnic benches by the stables - and we even have a doggy menu! Unfortunately dogs are not allowed inside the cafe itself. In summer our Horse Box bar serves drinks outside too.');
-  insertSv.run('Do I need to book a table? Can I make a reservation or booking?', 'For everyday visits we usually operate on a first come first served basis, and there is plenty of parking. For guaranteed tables, larger groups, afternoon tea or events, we recommend booking ahead - pop your name and email below and leave your details, and the team will get straight back to you to arrange it.');
+  insertSv.run('Do I need to book a table? Can I make a reservation or booking?', 'For tables of 4 or less we run on a first come first served basis, so just pop in. For anything more than that, we recommend booking to avoid disappointment - pop your name and email below and leave your details and the team will get straight back to you to arrange it.');
   insertSv.run('Do you do afternoon tea? How much is it and can I get it to take away?', 'Yes! Our afternoon tea is 23.95 pounds per person, served beautifully in gorgeous china. We can also make up afternoon tea boxes to take away. It is very popular for celebrations, so please leave your name and email below and the team will get back to you to book it in.');
   insertSv.run('Do you host events, parties, baby showers, birthdays or weddings?', 'Yes! We love hosting celebrations - baby showers, birthdays, bridal afternoon teas and more, with a lovely upstairs space for private groups. Pop your name and email below and leave your details, and the team will get straight back to you to plan your event.');
   insertSv.run('Do you cater for dietary requirements? Vegetarian, vegan, gluten free or allergies?', 'Absolutely - we regularly cater for vegetarian, gluten free and various allergies, and always do our best to accommodate dietary needs. Just let us know when you visit or when booking.');
