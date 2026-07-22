@@ -39,6 +39,12 @@ app.get('/demo', (req, res) => {
         subtitle: 'Your AI assistant — answering customer questions 24/7',
         q1: 'Are you dog friendly?',
         q2: 'Do you do afternoon tea?'
+      },
+      3: {
+        name: 'Ashbourne Road Dental',
+        subtitle: 'Your AI assistant — answering patient questions 24/7',
+        q1: 'Are you taking new patients?',
+        q2: 'Do you do emergency appointments?'
       }
     };
     const client = clients[businessId];
@@ -48,12 +54,19 @@ app.get('/demo', (req, res) => {
       html = html.replace('What are your opening hours?', client.q1);
       html = html.replace('What services do you offer?', client.q2);
       html = html.replace('<h3>Replify Assistant</h3>', '<h3>' + client.name + ' Assistant</h3>');
-      // Swap the pricing banner for a subtle "powered by" line
       html = html.replace(/<div class="cta">[\s\S]*?<\/div>/, '<p style="text-align:center;color:#9ca3af;font-size:12px;margin-top:32px;">Powered by <a href="https://replify-backend.onrender.com/demo" style="color:#4f46e5;text-decoration:none;">Replify.uk</a></p>');
     }
   }
 
   res.type('html').send(html);
+});
+// Serve widget test page at root /
+app.get('/', (req, res) => {
+  const widgetIndex = path.join(WIDGET_DIR, 'index.html');
+  if (!fs.existsSync(widgetIndex)) {
+    return res.status(200).send('<h1>Replify</h1><p>AI chatbots for local businesses. Widget coming soon — API is running fine. Try <a href="/health">/health</a>.</p>');
+  }
+  res.sendFile(widgetIndex);
 });
 // Routes
 app.use('/api/auth', authRoutes);
